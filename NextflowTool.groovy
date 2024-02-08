@@ -185,7 +185,7 @@ class NextflowTool {
     //
     public static String dashedLine(monochrome_logs) {
         Map colors = logColours(monochrome_logs)
-        return "-${colors.dim}----------------------------------------------------${colors.reset}-"
+        return "-" + "${colors.dim}-${colors.reset}"*100 + "-"
     }
     
     //
