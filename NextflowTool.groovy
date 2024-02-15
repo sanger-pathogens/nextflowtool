@@ -61,10 +61,19 @@ class NextflowTool {
                             }
 
                         } else {
+                            if (it.key.toString().contains('header')) {
+                                if (it.value.title){
+                                    log.info indent
+                                    log.info "${colors.red} ${it.value.title} ${colors.reset}"
+                                }
+                                log.info indent + it.value.subtext
+                                log.info indent
+                            } else {
                             //if nothing needs to be overwritten just print what is there
                             log.info indent + "--" + it.key
                             log.info indent + indent + "default: " + it.value.default
                             log.info indent + indent + it.value.help_text
+                            }
                         }
                     }
                     //put a line to seperate
