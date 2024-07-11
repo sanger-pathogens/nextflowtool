@@ -244,7 +244,7 @@ class NextflowTool {
             log.info indent
             commandLineParams.each { key, value ->
             log.info indent + "- ${key}: ${value}"
-            log.info indent
+            log.info indent //whitespace after params
         }
         }
     }
