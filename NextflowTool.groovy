@@ -216,4 +216,36 @@ class NextflowTool {
             """.stripIndent()
         )
     }
+
+    public static Map getCommandLineParams(String commandLine) {
+        def commandLineTokens = commandLine.tokenize('--')
+        def commandLineParams = [:]
+
+        commandLineTokens[1..-1].each { cmd ->
+            def keyVal = cmd.trim().split(' ', 2)
+            if (keyVal.size() >= 1 && keyVal[0]) {
+                def key = keyVal[0].trim()
+                def value = keyVal.size() == 2 ? keyVal[1].trim() : null
+                commandLineParams[key] = value ?: true
+            }
+        }
+        return commandLineParams
+    }
+
+    public static void commandLineParams(String commandLine, log, monochrome_logs) {
+        def indent = "      "
+        Map colors = logColours(monochrome_logs)
+        def commandLineParams = getCommandLineParams(commandLine)
+
+        if (commandLineParams.isEmpty()) {
+            log.info "${colors.purple} No parameters supplied: running with defaults. ${colors.reset}"
+        } else {
+            log.info "${colors.purple} The following parameters were provided on the command line: ${colors.reset}" 
+            log.info indent
+            commandLineParams.each { key, value ->
+            log.info indent + "- ${key}: ${value}"
+            log.info indent //whitespace after params
+        }
+        }
+    }
 }
