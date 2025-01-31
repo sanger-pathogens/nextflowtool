@@ -9,7 +9,6 @@ import groovy.json.JsonSlurper
 import groovy.json.JsonBuilder
 import nextflow.extension.FilesEx
 
-
 class NextflowTool {
     //
     // Dump pipeline parameters in a json file
@@ -110,15 +109,24 @@ class NextflowTool {
     //
     public static void summary(workflow, params, log) {
         Map colors = logColours(params.monochrome_logs)
+        String pipelineName = workflow.manifest.name
+
         if (workflow.success) {
             if (workflow.stats.ignoredCount == 0) {
-                log.info "-${colors.purple}[$workflow.manifest.name]${colors.green} Pipeline completed successfully${colors.reset}-"
+                log.info "-${colors.purple}[$pipelineName]${colors.green} Pipeline completed successfully${colors.reset}-"
             } else {
-                log.info "-${colors.purple}[$workflow.manifest.name]${colors.yellow} Pipeline completed successfully, but with errored process(es) ${colors.reset}-"
-            }
+                log.info "-${colors.purple}[$pipelineName]${colors.yellow} Pipeline completed successfully, but with ignored process(es)${colors.reset}-"
+             }
         } else {
-            log.info "-${colors.purple}[$workflow.manifest.name]${colors.red} Pipeline completed with errors${colors.reset}-"
+            log.info "-${colors.purple}[$pipelineName]${colors.red} Pipeline errored before completion${colors.reset}-"
         }
+
+        // Additional summary statistics
+        log.info "${colors.cyan}Summary statistics:${colors.reset}"
+        log.info "${colors.cyan}- Successfully completed processes: ${workflow.stats.succeedCount}${colors.reset}"
+        log.info "${colors.cyan}- Failed and retried processes: ${workflow.stats.failedCount}${colors.reset}"
+        log.info "${colors.cyan}- Failed and ignored processes: ${workflow.stats.ignoredCount}${colors.reset}"
+        log.info "${colors.cyan}- Total processes: ${workflow.stats.succeedCount + workflow.stats.ignoredCount + workflow.stats.failedCount}${colors.reset}"
     }
 
     //
