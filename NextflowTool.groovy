@@ -226,15 +226,18 @@ class NextflowTool {
     }
 
     public static Map getCommandLineParams(String commandLine) {
-        def commandLineTokens = commandLine.tokenize('--')
+        def commandLineTokens = commandLine.split(/\s+/)
         def commandLineParams = [:]
 
-        commandLineTokens[1..-1].each { cmd ->
-            def keyVal = cmd.trim().split(' ', 2)
-            if (keyVal.size() >= 1 && keyVal[0]) {
-                def key = keyVal[0].trim()
-                def value = keyVal.size() == 2 ? keyVal[1].trim() : null
-                commandLineParams[key] = value ?: true
+        for (int i = 0; i < commandLineTokens.length; i++) {
+            def token = commandLineTokens[i]
+            if (token.startsWith('--')){
+                def key = token.trim()
+                def value = true
+                if (i + 1 < commandLineTokens.length && !commandLineTokens[i+1].startswith('--'))
+                value = commandLineTokens[i+1].trim()
+                i++   // move past next token as it's the value for the previous param
+                commandLineParams[key] = value
             }
         }
         return commandLineParams
