@@ -254,7 +254,7 @@ class NextflowTool {
             log.info "${colors.purple} The following parameters were provided on the command line: ${colors.reset}" 
             log.info indent
             commandLineParams.each { key, value ->
-                log.info indent + "- ${key}: ${value}"
+                log.info indent + "${key}: ${value}"
                 }
             }
         log.info indent //whitespace after params
