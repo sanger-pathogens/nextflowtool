@@ -226,6 +226,7 @@ class NextflowTool {
     }
 
     public static Map getCommandLineParams(String commandLine) {
+        // Splitting on whitespace, assume no whitespace appears in param values
         def commandLineTokens = commandLine.split(/\s+/)
         def commandLineParams = [:]
 
