@@ -235,10 +235,12 @@ class NextflowTool {
             if (token.startsWith('--')){
                 def key = token.trim()
                 def value = true
-                if (i + 1 < commandLineTokens.length && !commandLineTokens[i+1].startsWith('--'))
-                value = commandLineTokens[i+1].trim()
-                i++   // move past next token as it's the value for the previous param
-                commandLineParams[key] = value
+                // Assume max 1 value can be supplied per param (inherent constraint in nextflow's commandline parsing) 
+                if (i + 1 < commandLineTokens.length && !commandLineTokens[i+1].startsWith('--')) {
+                    value = commandLineTokens[i+1].trim()
+                    i++   // move past next token as it's the value for the previous param
+                    commandLineParams[key] = value
+                }
             }
         }
         return commandLineParams
