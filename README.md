@@ -1,4 +1,4 @@
-# NextflowTool: A Groovy library of helper functions for Nextflow pipelines 
+# NextflowTool: A Groovy library of helper functions for Nextflow pipelines
 
 A Groovy library of helper functions such as printing path-info logo or printing help messages from JSON schemas
 
