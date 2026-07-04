@@ -57,6 +57,8 @@ class NextflowTool {
                                 log.info indent + "--" + it.key
                                 if (overwrite_param.default) {
                                     log.info indent + indent + "default: " + overwrite_param.default
+                                } else if (overwrite_param.required) {
+                                    log.info indent + indent + "<required>"
                                 }
                                 log.info indent + indent + overwrite_param.help_text
                             }
@@ -74,6 +76,8 @@ class NextflowTool {
                             log.info indent + "--" + it.key
                             if (it.value.default) {
                                 log.info indent + indent + "default: " + it.value.default
+                            } else if (it.value.required) {
+                                log.info indent + indent + "<required>"
                             }
                             log.info indent + indent + it.value.help_text
                             }
@@ -100,6 +104,8 @@ class NextflowTool {
                 log.info indent + "--" + it.key
                 if (it.value.default) {
                     log.info indent + indent + "default: " + it.value.default
+                } else if (it.value.required) {
+                    log.info indent + indent + "<required>"
                 }
                 log.info indent + indent + it.value.help_text
                 log.info indent
