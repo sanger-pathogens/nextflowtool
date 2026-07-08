@@ -14,4 +14,4 @@ This code was initially developed using a code foundation borrowed to [nf-co.re 
 
 For any queries, use our helpdesk [request portal](https://sanger.freshservice.com/support/catalog/items/426) (for Sanger staff) or contact us at pam-informatics@sanger.ac.uk.
 
-Copyright (C) 2023,2024 Genome Research Ltd.
+Copyright (C) 2023,2024,2026 Genome Research Ltd.
