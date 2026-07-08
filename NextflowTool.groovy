@@ -281,7 +281,7 @@ class NextflowTool {
      false if skipped (missing or outside safeRoot) with a warning printed to stderr
      incase you want to handle it differently if it fails this download
     */
-    public static boolean delete(Path file, Path safeRoot, log) {
+    public static boolean safeDelete(Path file, Path safeRoot, log) {
         if (file == null || !Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
             return false
         }
