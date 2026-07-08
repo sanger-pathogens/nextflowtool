@@ -12,6 +12,6 @@ This software is actively developed by the PaM Informatics team of the Parasites
 
 This code was initially developed using a code foundation borrowed to [nf-co.re tooling code base](https://github.com/nf-core/rnaseq/tree/3.13.2/lib).
 
-For any queries, use our helpdesk [request portal](https://jira.sanger.ac.uk/servicedesk/customer/portal/16) (for Sanger staff) or contact us at pam-informatics@sanger.ac.uk.
+For any queries, use our helpdesk [request portal](https://sanger.freshservice.com/support/catalog/items/426) (for Sanger staff) or contact us at pam-informatics@sanger.ac.uk.
 
 Copyright (C) 2023,2024 Genome Research Ltd.
