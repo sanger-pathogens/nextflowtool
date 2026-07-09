@@ -8,6 +8,9 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.json.JsonBuilder
 import nextflow.extension.FilesEx
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.LinkOption
 
 class NextflowTool {
     //
@@ -261,5 +264,42 @@ class NextflowTool {
                 }
             }
         log.info indent //whitespace after params
+    }
+
+    /*
+    Resolve a path (following symlinks if present) and delete the
+    real target, only if it falls inside the given safe root. Allowing you to not have to worry
+    about accidentally deleting files outside of your workflow workDir, for example.
+
+
+    Takes:
+     file     the Path to inspect - may be a symlink or a regular file
+     safeRoot root directory the resolved target MUST fall under (e.g. workflow.workDir)
+     log      a logger to use for warnings normal log namespace in nextflow
+    Returns:
+     true if a delete happened
+     false if skipped (missing or outside safeRoot) with a warning printed to stderr
+     incase you want to handle it differently if it fails this download
+    */
+    public static boolean safeDelete(Path file, Path safeRoot, log) {
+        if (file == null || !Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
+            return false
+        }
+
+        Path root = safeRoot.toRealPath()
+        Path real = file.toRealPath()
+
+        if (!real.startsWith(root)) {
+            log.warn " refusing to delete '${real}' - outside safe root '${root}'"
+            return false
+        }
+
+        if (Files.isSymbolicLink(file)) {
+            Files.deleteIfExists(real)   // the actual target
+            Files.deleteIfExists(file)
+        } else {
+            Files.deleteIfExists(file)
+        }
+        return true
     }
 }
