@@ -27,9 +27,9 @@ class NextflowTool {
     // print argument key, help text and type (default/required), if provided
     public static void printHelpMessageBlock(argumentKey, argumentBlock, indent, log) {
         log.info indent + "--" + argumentKey
-        if (argumentBlock.default) {
+        if (argumentBlock.containsKey("default")) {
             log.info indent + indent + "default: " + argumentBlock.default
-        } else if (argumentBlock.required) {
+        } else if (argumentBlock.containsKey("required")) {
             log.info indent + indent + "<required>"
         }
         log.info indent + indent + argumentBlock.help_text
