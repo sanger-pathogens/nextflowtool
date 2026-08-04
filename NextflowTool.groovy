@@ -27,6 +27,17 @@ class NextflowTool {
         temp_pf.delete()
     }
 
+    // print argument key, help text and type (default/required), if provided
+    public static void printHelpMessageBlock(argumentKey, argumentBlock, indent, log) {
+        log.info indent + "--" + argumentKey
+        if (argumentBlock.containsKey("default")) {
+            log.info indent + indent + "default: " + argumentBlock.default
+        } else if (argumentBlock.containsKey("required")) {
+            log.info indent + indent + "<required>"
+        }
+        log.info indent + indent + argumentBlock.help_text
+    }
+
     public static void help_message(pipeline_schema, schema_path_list, monochrome_logs, log) {
         Map colors = logColours(monochrome_logs)
         def indent = "      "
@@ -57,9 +68,7 @@ class NextflowTool {
                             def overwrite_param = Eval.x( master_schema, 'x.' + overwrite_path)
 
                             if (overwrite_param.help_text != "") {
-                                log.info indent + "--" + it.key
-                                log.info indent + indent + "default: " + overwrite_param.default
-                                log.info indent + indent + overwrite_param.help_text
+                                printHelpMessageBlock(it.key, overwrite_param, indent, log)
                             }
 
                         } else {
@@ -71,10 +80,8 @@ class NextflowTool {
                                 log.info indent + it.value.subtext
                                 log.info indent
                             } else {
-                            //if nothing needs to be overwritten just print what is there
-                            log.info indent + "--" + it.key
-                            log.info indent + indent + "default: " + it.value.default
-                            log.info indent + indent + it.value.help_text
+                                //if nothing needs to be overwritten just print what is there
+                                printHelpMessageBlock(it.key, it.value, indent, log)
                             }
                         }
                     }
@@ -96,10 +103,8 @@ class NextflowTool {
                     log.info indent
 
                 } else {
-                log.info indent + "--" + it.key
-                log.info indent + indent + "default: " + it.value.default
-                log.info indent + indent + it.value.help_text
-                log.info indent
+                    printHelpMessageBlock(it.key, it.value, indent, log)
+                    log.info indent
                 }
             }
         //put a line to seperate
