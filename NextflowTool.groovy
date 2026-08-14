@@ -233,16 +233,16 @@ class NextflowTool {
         )
     }
 
-    public static Map getCommandLineParams(String commandLine) {
+    public static Map<String, String> getCommandLineParams(String commandLine) {
         // Splitting on whitespace, assume no whitespace appears in param values
-        def commandLineTokens = commandLine.split(/\s+/)
-        def commandLineParams = [:]
+        String[] commandLineTokens = commandLine.split(/\s+/)
+        Map<String, String> commandLineParams = [:]
 
         for (int i = 0; i < commandLineTokens.length; i++) {
-            def token = commandLineTokens[i]
+            String token = commandLineTokens[i]
             if (token.startsWith('--')){
-                def key = token.trim()
-                def value = true
+                String key = token.trim()
+                String value = "true"
                 // Assume max 1 value can be supplied per param (inherent constraint in nextflow's commandline parsing) 
                 if (i + 1 < commandLineTokens.length && !commandLineTokens[i+1].startsWith('--')) {
                     value = commandLineTokens[i+1].trim()
