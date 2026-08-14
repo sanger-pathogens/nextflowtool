@@ -247,8 +247,8 @@ class NextflowTool {
                 if (i + 1 < commandLineTokens.length && !commandLineTokens[i+1].startsWith('-')) {
                     value = commandLineTokens[i+1].trim()
                     i++   // move past next token as it's the value for the previous param
-                    commandLineParams[key] = value
                 }
+                commandLineParams[key] = value
             }
         }
         return commandLineParams
