@@ -11,6 +11,7 @@ import nextflow.extension.FilesEx
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.LinkOption
+import java.util.regex.Matcher
 
 class NextflowTool {
     //
