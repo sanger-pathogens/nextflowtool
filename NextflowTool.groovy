@@ -233,20 +233,70 @@ class NextflowTool {
         )
     }
 
-    public static Map<String, String> getCommandLineParams(String commandLine) {
-        // Splitting on whitespace, assume no whitespace appears in param values
-        String[] commandLineTokens = commandLine.split(/\s+/)
+    //
+    // Command line parameter parsing
+    //
+
+    private static final String TOKEN_PATTERN = /"([^"]*)"|'([^']*)'|(\S+)/
+    private static final String NUMERIC_PATTERN = /-?\d+(\.\d+)?/
+
+    /**
+     * A single parsed token, remembering whether it came from a quoted
+     * span so quoting can override the leading-dash heuristic later.
+     */
+    private static class Token {
+        String value
+        boolean wasQuoted
+
+        Token(String value, boolean wasQuoted) {
+            this.value = value
+            this.wasQuoted = wasQuoted
+        }
+    }
+
+    private static List<Token> tokenizeCommandLine(String commandLine) {
+        List<Token> tokens = []
+        Matcher matcher = commandLine =~ TOKEN_PATTERN
+        while (matcher.find()) {
+            if (matcher.group(1) != null) {
+                tokens << new Token(matcher.group(1), true)   // double-quoted
+            } else if (matcher.group(2) != null) {
+                tokens << new Token(matcher.group(2), true)   // single-quoted
+            } else {
+                tokens << new Token(matcher.group(3), false)  // unquoted
+            }
+        }
+        return tokens
+    }
+
+    private static boolean isNumeric(String token) {
+        return token ==~ NUMERIC_PATTERN
+    }
+
+    /**
+     * A token is a value (not a new flag) if:
+     *  - it was quoted (quoting always wins, regardless of content), or
+     *  - it doesn't start with '-', or
+     *  - it looks like a negative number (e.g. -5, -3.14)
+     */
+    private static boolean isValueToken(Token token) {
+        return token.wasQuoted || !token.value.startsWith('-') || isNumeric(token.value)
+    }
+
+    static Map<String, String> getCommandLineParams(String commandLine) {
+        List<Token> commandLineTokens = tokenizeCommandLine(commandLine)
         Map<String, String> commandLineParams = [:]
 
-        for (int i = 0; i < commandLineTokens.length; i++) {
-            String token = commandLineTokens[i]
-            if (token.startsWith('--')){
-                String key = token.trim()
+        for (int i = 0; i < commandLineTokens.size(); i++) {
+            Token token = commandLineTokens.get(i)
+            // Flags themselves are never quoted in practice, but guard anyway
+            if (!token.wasQuoted && token.value.startsWith('--')) {
+                String key = token.value.trim()
                 String value = "true"
-                // Assume max 1 value can be supplied per param (inherent constraint in nextflow's commandline parsing) 
-                if (i + 1 < commandLineTokens.length && !commandLineTokens[i+1].startsWith('-')) {
-                    value = commandLineTokens[i+1].trim()
-                    i++   // move past next token as it's the value for the previous param
+
+                if (i + 1 < commandLineTokens.size() && isValueToken(commandLineTokens.get(i + 1))) {
+                    value = commandLineTokens.get(i + 1).value.trim()
+                    i++
                 }
                 commandLineParams[key] = value
             }
@@ -270,6 +320,10 @@ class NextflowTool {
             }
         log.info indent //whitespace after params
     }
+
+    //
+    // Other utility functions
+    //
 
     /*
     Resolve a path (following symlinks if present) and delete the
