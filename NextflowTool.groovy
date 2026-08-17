@@ -239,7 +239,6 @@ class NextflowTool {
     //
 
     private static final String TOKEN_PATTERN = /"([^"]*)"|'([^']*)'|(\S+)/
-    private static final String NUMERIC_PATTERN = /-?\d+(\.\d+)?/
 
     /**
      * A single parsed token, remembering whether it came from a quoted
@@ -270,21 +269,7 @@ class NextflowTool {
         return tokens
     }
 
-    private static boolean isNumeric(String token) {
-        return token ==~ NUMERIC_PATTERN
-    }
-
-    /**
-     * A token is a value (not a new flag) if:
-     *  - it was quoted (quoting always wins, regardless of content), or
-     *  - it doesn't start with '-', or
-     *  - it looks like a negative number (e.g. -5, -3.14)
-     */
-    private static boolean isValueToken(Token token) {
-        return token.wasQuoted || !token.value.startsWith('-') || isNumeric(token.value)
-    }
-
-    static Map<String, String> getCommandLineParams(String commandLine) {
+    static Map<String, String> getCommandLineParams(String commandLine, Map params) {
         List<Token> commandLineTokens = tokenizeCommandLine(commandLine)
         Map<String, String> commandLineParams = [:]
 
@@ -292,23 +277,17 @@ class NextflowTool {
             Token token = commandLineTokens.get(i)
             // Flags themselves are never quoted in practice, but guard anyway
             if (!token.wasQuoted && token.value.startsWith('--')) {
-                String key = token.value.trim()
-                String value = "true"
-
-                if (i + 1 < commandLineTokens.size() && isValueToken(commandLineTokens.get(i + 1))) {
-                    value = commandLineTokens.get(i + 1).value.trim()
-                    i++
-                }
-                commandLineParams[key] = value
+                def param_name = token.value[2..-1]  // Remove leading `--` 
+                commandLineParams[token.value] = params[param_name]
             }
         }
         return commandLineParams
     }
 
-    public static void commandLineParams(String commandLine, log, monochrome_logs) {
+    public static void commandLineParams(String commandLine, Map params, log, monochrome_logs) {
         def indent = "      "
         Map colors = logColours(monochrome_logs)
-        def commandLineParams = getCommandLineParams(commandLine)
+        def commandLineParams = getCommandLineParams(commandLine, params)
 
         if (commandLineParams.isEmpty()) {
             log.info "${colors.purple} No parameters supplied: running with defaults. ${colors.reset}"
