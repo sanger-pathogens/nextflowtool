@@ -38,19 +38,11 @@ class NextflowTool {
         log.info indent + indent + argumentBlock.help_text
     }
 
-    public static void help_message(pipeline_schema, schema_path_list, monochrome_logs, log) {
+    public static void help_message(schema_path_list, monochrome_logs, log) {
         Map colors = logColours(monochrome_logs)
         def indent = "      "
-        //master schema is pipeline specific it only contains what needs to be there other stuff can be imported from the path_list
-        //master schema contains a overwrite section which is not printed and instead used to overwrite defaults or whatever in the
-        //general imported schema
-        def master_in = new File(pipeline_schema).text
-        def master_schema = new JsonSlurper().parseText(master_in)
 
-        //create a list of keys you want to supress in the json
-        def banned_keylist = master_schema.overwrite_param.keySet() as Set
-
-        //build a single core schema by folding in each imported schema's params in list order:
+        //build a single core schema by folding in each schema's params in list order:
         //a param found in a schema located further down schema_path_list overwrites the value
         //found for the same param in a schema located earlier in the list
         def core_params = [:]
@@ -60,20 +52,9 @@ class NextflowTool {
             def json = new JsonSlurper().parseText(schema_in)
 
             json.params.each { group ->
-                if (!banned_keylist.contains(group.key)) {
-                    def core_group = core_params.computeIfAbsent(group.key) { [:] }
-                    group.value.each { param ->
-                        if (param.key in master_schema.overwrite_param) {
-                            // this replaces the imported default/help text with the pipeline-specific one
-                            def overwrite_param = master_schema.overwrite_param[param.key]
-                            if (overwrite_param.help_text != "") {
-                                core_group[param.key] = overwrite_param
-                            }
-                        } else {
-                            //if nothing needs to be overwritten just keep what is there
-                            core_group[param.key] = param.value
-                        }
-                    }
+                def core_group = core_params.computeIfAbsent(group.key) { [:] }
+                group.value.each { param ->
+                    core_group[param.key] = param.value
                 }
             }
         }
@@ -95,27 +76,6 @@ class NextflowTool {
             }
             //put a line to seperate
             log.info dashedLine(monochrome_logs)
-        }
-
-        //finally print the params in the master manifest
-        master_schema.params.each {
-            log.info "${colors.purple} ${it.key} ${colors.reset}"
-            it.value.each {
-                if (it.key.toString().contains('header')) {
-                    if (it.value.title){
-                        log.info indent
-                        log.info "${colors.red} ${it.value.title} ${colors.reset}"
-                    }
-                    log.info indent + it.value.subtext
-                    log.info indent
-
-                } else {
-                    printHelpMessageBlock(it.key, it.value, indent, log)
-                    log.info indent
-                }
-            }
-        //put a line to seperate
-        log.info dashedLine(monochrome_logs)
         }
     }
 
