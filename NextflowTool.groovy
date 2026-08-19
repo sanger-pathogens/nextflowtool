@@ -47,49 +47,56 @@ class NextflowTool {
         def master_in = new File(pipeline_schema).text
         def master_schema = new JsonSlurper().parseText(master_in)
 
+        //create a list of keys you want to supress in the json
+        def banned_keylist = master_schema.overwrite_param.keySet() as Set
+
+        //build a single core schema by folding in each imported schema's params in list order:
+        //a param found in a schema located further down schema_path_list overwrites the value
+        //found for the same param in a schema located earlier in the list
+        def core_params = [:]
+
         for (schema_path in schema_path_list) {
             def schema_in = new File(schema_path).text
             def json = new JsonSlurper().parseText(schema_in)
 
-            //create a list of keys you want to supress in the json
-            def banned_keylist = master_schema.overwrite_param.keySet() as Set
-
-            json.params.each{
-                if (!banned_keylist.contains(it.key)) {
-                    log.info "${colors.purple} ${it.key} ${colors.reset}"
-                    it.value.each {
-                        if (it.key in master_schema.overwrite_param) {
-                            // A groovy json path cannot be queried using a variable unless you force it using eval
-                            // set up the query and then use eval.x to append the search term onto the end of the json object used to overwrite
-                            // this then replaces the default value with the input
-
-                            def overwrite_path = 'overwrite_param.' + it.key
-
-                            def overwrite_param = Eval.x( master_schema, 'x.' + overwrite_path)
-
+            json.params.each { group ->
+                if (!banned_keylist.contains(group.key)) {
+                    def core_group = core_params.computeIfAbsent(group.key) { [:] }
+                    group.value.each { param ->
+                        if (param.key in master_schema.overwrite_param) {
+                            // this replaces the imported default/help text with the pipeline-specific one
+                            def overwrite_param = master_schema.overwrite_param[param.key]
                             if (overwrite_param.help_text != "") {
-                                printHelpMessageBlock(it.key, overwrite_param, indent, log)
+                                core_group[param.key] = overwrite_param
                             }
-
                         } else {
-                            if (it.key.toString().contains('header')) {
-                                if (it.value.title){
-                                    log.info indent
-                                    log.info "${colors.red} ${it.value.title} ${colors.reset}"
-                                }
-                                log.info indent + it.value.subtext
-                                log.info indent
-                            } else {
-                                //if nothing needs to be overwritten just print what is there
-                                printHelpMessageBlock(it.key, it.value, indent, log)
-                            }
+                            //if nothing needs to be overwritten just keep what is there
+                            core_group[param.key] = param.value
                         }
                     }
-                    //put a line to seperate
-                    log.info dashedLine(monochrome_logs)
                 }
             }
         }
+
+        //print the merged core schema
+        core_params.each { group ->
+            log.info "${colors.purple} ${group.key} ${colors.reset}"
+            group.value.each { param ->
+                if (param.key.toString().contains('header')) {
+                    if (param.value.title) {
+                        log.info indent
+                        log.info "${colors.red} ${param.value.title} ${colors.reset}"
+                    }
+                    log.info indent + param.value.subtext
+                    log.info indent
+                } else {
+                    printHelpMessageBlock(param.key, param.value, indent, log)
+                }
+            }
+            //put a line to seperate
+            log.info dashedLine(monochrome_logs)
+        }
+
         //finally print the params in the master manifest
         master_schema.params.each {
             log.info "${colors.purple} ${it.key} ${colors.reset}"
