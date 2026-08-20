@@ -11,6 +11,7 @@ import nextflow.extension.FilesEx
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.LinkOption
+import java.util.regex.Matcher
 
 class NextflowTool {
     //
@@ -233,31 +234,60 @@ class NextflowTool {
         )
     }
 
-    public static Map getCommandLineParams(String commandLine) {
-        // Splitting on whitespace, assume no whitespace appears in param values
-        def commandLineTokens = commandLine.split(/\s+/)
-        def commandLineParams = [:]
+    //
+    // Command line parameter parsing
+    //
 
-        for (int i = 0; i < commandLineTokens.length; i++) {
-            def token = commandLineTokens[i]
-            if (token.startsWith('--')){
-                def key = token.trim()
-                def value = true
-                // Assume max 1 value can be supplied per param (inherent constraint in nextflow's commandline parsing) 
-                if (i + 1 < commandLineTokens.length && !commandLineTokens[i+1].startsWith('--')) {
-                    value = commandLineTokens[i+1].trim()
-                    i++   // move past next token as it's the value for the previous param
-                    commandLineParams[key] = value
-                }
+    private static final String TOKEN_PATTERN = /"([^"]*)"|'([^']*)'|(\S+)/
+
+    /**
+     * A single parsed token, remembering whether it came from a quoted
+     * span so quoting can override the leading-dash heuristic later.
+     */
+    private static class Token {
+        String value
+        boolean wasQuoted
+
+        Token(String value, boolean wasQuoted) {
+            this.value = value
+            this.wasQuoted = wasQuoted
+        }
+    }
+
+    private static List<Token> tokenizeCommandLine(String commandLine) {
+        List<Token> tokens = []
+        Matcher matcher = commandLine =~ TOKEN_PATTERN
+        while (matcher.find()) {
+            if (matcher.group(1) != null) {
+                tokens << new Token(matcher.group(1), true)   // double-quoted
+            } else if (matcher.group(2) != null) {
+                tokens << new Token(matcher.group(2), true)   // single-quoted
+            } else {
+                tokens << new Token(matcher.group(3), false)  // unquoted
+            }
+        }
+        return tokens
+    }
+
+    static Map<String, String> getCommandLineParams(String commandLine, Map params) {
+        List<Token> commandLineTokens = tokenizeCommandLine(commandLine)
+        Map<String, String> commandLineParams = [:]
+
+        for (int i = 0; i < commandLineTokens.size(); i++) {
+            Token token = commandLineTokens.get(i)
+            // Flags themselves are never quoted in practice, but guard anyway
+            if (!token.wasQuoted && token.value.startsWith('--')) {
+                def param_name = token.value[2..-1]  // Remove leading `--` 
+                commandLineParams[token.value] = params[param_name]
             }
         }
         return commandLineParams
     }
 
-    public static void commandLineParams(String commandLine, log, monochrome_logs) {
+    public static void commandLineParams(String commandLine, Map params, log, monochrome_logs) {
         def indent = "      "
         Map colors = logColours(monochrome_logs)
-        def commandLineParams = getCommandLineParams(commandLine)
+        def commandLineParams = getCommandLineParams(commandLine, params)
 
         if (commandLineParams.isEmpty()) {
             log.info "${colors.purple} No parameters supplied: running with defaults. ${colors.reset}"
@@ -270,6 +300,10 @@ class NextflowTool {
             }
         log.info indent //whitespace after params
     }
+
+    //
+    // Other utility functions
+    //
 
     /*
     Resolve a path (following symlinks if present) and delete the
